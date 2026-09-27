@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Nhân viên – CAPPAN</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-page="staff">
+
+<header class="app-header">
+  <a class="logo" href="index.html">
+    <span class="brand">CAPP<span>AN</span></span>
+    <span class="tagline">Coffee &amp; More - Home Study</span>
+  </a>
+  <button class="menu-toggle" onclick="toggleMobileMenu()">☰</button>
+  <nav class="nav" id="mainNav">
+    <ul class="nav-list">
+      <li><a href="index.html">Trang chủ</a></li>
+      <li><a href="menu.html">Thực đơn</a></li>
+      <li><a href="booking.html">Đặt chỗ</a></li>
+      <li><a href="order.html">Đặt nước</a></li>
+      <li><a href="cart.html">Giỏ hàng</a></li>
+      <li><a href="tracking.html">Theo dõi đơn</a></li>
+      <li><a href="contact.html">Liên hệ</a></li>
+    </ul>
+    <div class="user-area" id="userArea"></div>
+  </nav>
+</header>
+
+<section class="section">
+  <div class="staff-header">
+    <div>
+      <h2 class="section-title" style="text-align:left; margin-bottom:6px;">
+        👨‍💼 Dashboard Nhân viên
+      </h2>
+      <p style="color:var(--gray);">
+        Chào <strong id="staffName">Nhân viên</strong> — Chúc bạn một ngày làm việc hiệu quả!
+      </p>
+    </div>
+    <div class="staff-time" id="staffTime"></div>
+  </div>
+
+  <!-- TAB SWITCH -->
+  <div class="staff-tabs">
+    <button class="staff-tab active" data-tab="overview" onclick="switchStaffTab('overview')">
+      📊 Tổng quan
+    </button>
+    <button class="staff-tab" data-tab="schedule" onclick="switchStaffTab('schedule')">
+      📅 Lịch ca
+    </button>
+  </div>
+
+  <!-- ================== TAB 1: TỔNG QUAN ================== -->
+  <div id="tab-overview" class="staff-tab-content active">
+
+    <!-- THỐNG KÊ NHANH -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">🪑</div>
+        <div class="stat-info">
+          <div class="stat-value" id="statTotalSeats">0</div>
+          <div class="stat-label">Tổng số chỗ</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">✅</div>
+        <div class="stat-info">
+          <div class="stat-value" id="statAvailableSeats">0</div>
+          <div class="stat-label">Chỗ trống</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🔴</div>
+        <div class="stat-info">
+          <div class="stat-value" id="statBookedSeats">0</div>
+          <div class="stat-label">Đã đặt</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📦</div>
+        <div class="stat-info">
+          <div class="stat-value" id="statOrders">0</div>
+          <div class="stat-label">Đơn hàng</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2 CỘT: SƠ ĐỒ + ĐƠN HÀNG -->
+    <div class="staff-layout">
+      <div class="staff-panel">
+        <div class="panel-header">
+          <h3>🪑 Sơ đồ chỗ ngồi</h3>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+            <div class="floor-switch-small" id="staffFloorSwitch"></div>
+            <button class="btn-mini-reset" onclick="resetAllSeats()">🔄 Reset tất cả</button>
+          </div>
+        </div>
+        <div class="staff-seat-map" id="staffSeatMap"></div>
+        <p class="panel-hint">💡 Click nút <strong>✕</strong> trên chỗ đỏ để reset</p>
+      </div>
+
+      <div class="staff-panel">
+        <div class="panel-header">
+          <h3>📦 Đơn hàng gần đây</h3>
+        </div>
+        <div id="staffOrders">
+          <p class="empty-note">Chưa có đơn hàng nào.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- LỊCH SỬ ĐẶT CHỖ -->
+    <div class="staff-panel" style="margin-top:25px;">
+      <div class="panel-header">
+        <h3>📅 Lịch sử đặt chỗ gần đây</h3>
+        <button class="btn-mini-reset" onclick="completeAllBookings()">✅ Hoàn thành tất cả</button>
+      </div>
+      <div id="staffBookings">
+        <p class="empty-note">Chưa có lượt đặt chỗ nào.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================== TAB 2: LỊCH CA ================== -->
+  <div id="tab-schedule" class="staff-tab-content">
+    <div class="staff-panel">
+      <div class="panel-header">
+        <h3>📅 Lịch phân ca tuần này</h3>
+        <div class="schedule-controls">
+          <button class="btn-schedule-nav" onclick="prevWeek()">← Tuần trước</button>
+          <span class="week-label" id="weekLabel"></span>
+          <button class="btn-schedule-nav" onclick="nextWeek()">Tuần sau →</button>
+          <button class="btn-mini-reset" onclick="clearSchedule()">🗑️ Xoá tất cả</button>
+        </div>
+      </div>
+      <div class="schedule-grid" id="scheduleGrid"></div>
+    </div>
+
+    <!-- DANH SÁCH NHÂN VIÊN -->
+    <div class="staff-panel" style="margin-top:25px;">
+      <div class="panel-header">
+        <h3>👥 Danh sách nhân viên</h3>
+      </div>
+      <div class="staff-list" id="staffList"></div>
+    </div>
+  </div>
+
+</section>
+
+<footer class="app-footer">
+  <div class="footer-brand">CAPP<span>AN</span></div>
+  <div class="footer-tagline">Coffee &amp; More - Home Study</div>
+  <div class="footer-links">
+    <a href="index.html">Trang chủ</a>
+    <a href="menu.html">Thực đơn</a>
+    <a href="booking.html">Đặt chỗ</a>
+    <a href="order.html">Đặt nước</a>
+    <a href="cart.html">Giỏ hàng</a>
+    <a href="tracking.html">Theo dõi đơn</a>
+    <a href="contact.html">Liên hệ</a>
+  </div>
+  <div class="footer-copy">© CAPPANNGUYEN · Hotline: 0366 474 038</div>
+</footer>
+
+<button class="chat-btn" onclick="toggleChat()">💬</button>
+<div class="chat-box" id="chatBox">
+  <div class="chat-header">
+    <h4>🤖 Trợ lý CAPPAN</h4>
+    <button onclick="toggleChat()">✕</button>
+  </div>
+  <div class="chat-body" id="chatBody">
+    <div class="msg bot"><div class="bubble">Chào nhân viên! Cần hỗ trợ gì không? 👨‍💼</div></div>
+  </div>
+  <div class="chat-input">
+    <input type="text" id="chatInput" placeholder="Nhập tin nhắn..."
+           onkeypress="if(event.key==='Enter') sendChat()">
+    <button onclick="sendChat()">➤</button>
+  </div>
+</div>
+
+<div class="toast" id="toast">✓ Thành công!</div>
+
+<!-- MODAL: Chọn nhân viên cho ca -->
+<div class="modal-overlay" id="shiftModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('shiftModal')">✕</button>
+    <h2 id="shiftModalTitle">Chọn nhân viên</h2>
+    <p class="modal-sub" id="shiftModalSub"></p>
+    <div class="staff-picker" id="staffPicker"></div>
+  </div>
+</div>
+
+<script src="js/data/schema.js"></script>
+<script src="js/data/seed.js"></script>
+<script src="js/api/index.js"></script>
+<script src="js/ai/brain.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/main.js"></script>
+
+<script>
+/* ============================================================
+   STAFF DASHBOARD
+============================================================ */
+
+let staffFloor = 'F1';
+let currentWeekStart = getMonday(new Date());
+
+/* ---------- INIT ---------- */
+document.addEventListener('DOMContentLoaded', () => {
+  const user = API.users.getCurrent();
+
+  if (!user) {
+    showToast('🔒 Vui lòng đăng nhập!', '#c62828');
+    setTimeout(() => { window.location.href = 'login.html'; }, 800);
+    return;
+  }
+
+  if (user.role !== 'staff') {
+    showToast('⛔ Bạn không có quyền truy cập!', '#c62828');
+    setTimeout(() => { window.location.href = 'index.html'; }, 800);
+    return;
+  }
+
+  document.getElementById('staffName').textContent = user.name;
+
+  renderClock();
+  setInterval(renderClock, 1000);
+
+  refreshAll();
+  setInterval(refreshAll, 10000);
+});
+
+/* ---------- TAB SWITCH ---------- */
+function switchStaffTab(tabId) {
+  document.querySelectorAll('.staff-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === tabId);
+  });
+  document.querySelectorAll('.staff-tab-content').forEach(c => {
+    c.classList.toggle('active', c.id === 'tab-' + tabId);
+  });
+
+  if (tabId === 'schedule') renderSchedule();
+}
+
+/* ---------- ĐỒNG HỒ ---------- */
+function renderClock() {
+  const now = new Date();
+  const time = now.toLocaleTimeString('vi-VN');
+  const date = now.toLocaleDateString('vi-VN', {
+    weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric'
+  });
+  const el = document.getElementById('staffTime');
+  if (el) el.innerHTML = `<strong>${time}</strong><br><small>${date}</small>`;
+}
+
+/* ---------- REFRESH OVERVIEW ---------- */
+function refreshAll() {
+  renderStats();
+  renderStaffFloorSwitch();
+  renderStaffSeatMap();
+  renderStaffOrders();
+  renderStaffBookings();
+}
+
+function renderStats() {
+  const seats = API.seats.getAll();
+  const available = seats.filter(s => s.status === 'available').length;
+  const booked = seats.filter(s => s.status === 'booked').length;
+  const orders = API.orders.getAll();
+
+  const setText = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  };
+  setText('statTotalSeats', seats.length);
+  setText('statAvailableSeats', available);
+  setText('statBookedSeats', booked);
+  setText('statOrders', orders.length);
+}
+
+function renderStaffFloorSwitch() {
+  const el = document.getElementById('staffFloorSwitch');
+  if (!el) return;
+  el.innerHTML = API.floors.getAll().map(f => {
+    const bookedCount = API.seats.getByFloor(f.id).filter(s => s.status === 'booked').length;
+    return `
+      <button class="floor-btn-small ${f.id === staffFloor ? 'active' : ''}"
+              onclick="switchStaffFloor('${f.id}')">
+        ${f.name}${bookedCount > 0 ? ` (${bookedCount})` : ''}
+      </button>
+    `;
+  }).join('');
+}
+
+function switchStaffFloor(floorId) {
+  staffFloor = floorId;
+  renderStaffFloorSwitch();
+  renderStaffSeatMap();
+}
+
+function renderStaffSeatMap() {
+  const el = document.getElementById('staffSeatMap');
+  if (!el) return;
+
+  let seats = [];
+  try {
+    seats = API.seats.getByFloor(staffFloor);
+  } catch (e) {
+    el.innerHTML = '<p class="empty-note">Lỗi tải dữ liệu.</p>';
+    return;
+  }
+
+  if (!seats || seats.length === 0) {
+    el.innerHTML = '<p class="empty-note">Tầng này chưa có chỗ nào.</p>';
+    return;
+  }
+
+  const cols = Math.min(seats.length, 4);
+  el.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
+  el.innerHTML = seats.map(s => {
+    let activeBooking = null;
+    try { activeBooking = API.bookings.getActiveBySeat(s.id); } catch (e) {}
+
+    const isBooked = s.status === 'booked';
+
+    return `
+      <div class="staff-seat ${s.status}">
+        ${isBooked ? `<button class="seat-reset-btn"
+                              onclick="event.stopPropagation(); resetSeat('${s.id}')"
+                              title="Reset chỗ này">✕</button>` : ''}
+        <div class="seat-icon">🪑</div>
+        <div class="seat-id">${s.id}</div>
+        <div class="seat-capacity">${s.capacity}👤</div>
+        <div class="seat-status">${isBooked ? 'Đã đặt' : 'Trống'}</div>
+        ${activeBooking ? `<div class="seat-customer">${activeBooking.id}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function resetSeat(seatId) {
+  const seat = API.seats.getById(seatId);
+  if (!seat || seat.status === 'available') {
+    showToast(`Chỗ ${seatId} đang trống!`, '#856404');
+    return;
+  }
+
+  const activeBooking = API.bookings.getActiveBySeat(seatId);
+  const msg = activeBooking
+    ? `Reset chỗ ${seatId}? Booking ${activeBooking.id} sẽ hoàn thành.`
+    : `Reset chỗ ${seatId} về trống?`;
+
+  if (!confirm(msg)) return;
+
+  if (activeBooking) {
+    API.bookings.complete(activeBooking.id);
+  } else {
+    API.seats.release(seatId);
+  }
+
+  refreshAll();
+  showToast(`✓ Đã reset chỗ ${seatId}`);
+}
+
+function resetAllSeats() {
+  const bookedCount = API.seats.getBooked().length;
+  if (bookedCount === 0) {
+    showToast('Tất cả chỗ đã trống rồi!', '#856404');
+    return;
+  }
+
+  if (!confirm(`Reset TẤT CẢ ${bookedCount} chỗ đã đặt về TRỐNG?`)) return;
+
+  API.seats.releaseAll();
+
+  const bookings = API.bookings.getAll();
+  bookings.forEach(b => {
+    if (b.status === 'confirmed') b.status = 'completed';
+  });
+  localStorage.setItem('cappan_bookings', JSON.stringify(bookings));
+
+  refreshAll();
+  showToast(`✓ Đã reset ${bookedCount} chỗ ngồi!`);
+}
+
+function completeAllBookings() {
+  const activeBookings = API.bookings.getAll().filter(b => b.status === 'confirmed');
+  if (activeBookings.length === 0) {
+    showToast('Không có booking nào đang hoạt động!', '#856404');
+    return;
+  }
+
+  if (!confirm(`Đánh dấu ${activeBookings.length} booking là "Hoàn thành"?`)) return;
+
+  activeBookings.forEach(b => API.bookings.complete(b.id));
+  refreshAll();
+  showToast(`✓ Đã hoàn thành ${activeBookings.length} booking!`);
+}
+
+function renderStaffOrders() {
+  const el = document.getElementById('staffOrders');
+  if (!el) return;
+
+  const orders = API.orders.getAll().slice().reverse().slice(0, 10);
+  if (orders.length === 0) {
+    el.innerHTML = '<p class="empty-note">Chưa có đơn hàng nào.</p>';
+    return;
+  }
+
+  const statusText = ['Chờ xử lý', 'Đang pha', 'Shipper lấy', 'Đang giao', 'Hoàn tất'];
+
+  el.innerHTML = orders.map(o => `
+    <div class="order-row">
+      <div class="order-row-left">
+        <strong>#${o.id}</strong>
+        <small>${o.items.length} món · ${API.utils.formatVND(o.total)}</small>
+      </div>
+      <div class="order-row-right">
+        <span class="order-status-badge step-${o.step}">${statusText[o.step] || '—'}</span>
+        ${o.step < 4 ? `<button class="btn-mini" onclick="advanceOrder('${o.id}')">→</button>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function advanceOrder(orderId) {
+  const order = API.orders.getById(orderId);
+  if (!order) return;
+  const newStep = Math.min(order.step + 1, 4);
+  API.orders.updateStep(orderId, newStep);
+  renderStaffOrders();
+  renderStats();
+  showToast(`✓ Đơn #${orderId} → bước ${newStep + 1}`);
+}
+
+function renderStaffBookings() {
+  const el = document.getElementById('staffBookings');
+  if (!el) return;
+
+  const bookings = API.bookings.getAll().slice().reverse().slice(0, 15);
+  if (bookings.length === 0) {
+    el.innerHTML = '<p class="empty-note">Chưa có lượt đặt chỗ nào.</p>';
+    return;
+  }
+
+  el.innerHTML = `
+    <table class="staff-table">
+      <thead>
+        <tr>
+          <th>Mã</th><th>Khách</th><th>Chỗ</th><th>Tầng</th>
+          <th>Ngày</th><th>Giờ</th><th>Trạng thái</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${bookings.map(b => {
+          const user = API.users.getById(b.userId);
+          const floor = API.floors.getById(b.floorId);
+          const statusText = {
+            confirmed: 'Đang hoạt động',
+            completed: 'Hoàn thành',
+            cancelled: 'Đã huỷ',
+            pending: 'Chờ xử lý'
+          };
+          return `
+            <tr>
+              <td><strong>${b.id}</strong></td>
+              <td>${user ? user.name : '—'}</td>
+              <td>${b.seatId}</td>
+              <td>${floor ? floor.name : '—'}</td>
+              <td>${b.date}</td>
+              <td>${b.time}</td>
+              <td><span class="status-tag ${b.status}">${statusText[b.status] || b.status}</span></td>
+            </tr>
+          `;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+/* ============================================================
+   LỊCH PHÂN CA
+============================================================ */
+
+function getMonday(date) {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  const monday = new Date(d.setDate(diff));
+  monday.setHours(0, 0, 0, 0);
+  return monday;
+}
+
+function formatDate(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function prevWeek() {
+  currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+  renderSchedule();
+}
+
+function nextWeek() {
+  currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+  renderSchedule();
+}
+
+function renderSchedule() {
+  const grid = document.getElementById('scheduleGrid');
+  const label = document.getElementById('weekLabel');
+  if (!grid) return;
+
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(currentWeekStart);
+    d.setDate(d.getDate() + i);
+    days.push(d);
+  }
+
+  const startStr = days[0].toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+  const endStr = days[6].toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+  if (label) label.textContent = `${startStr} – ${endStr}`;
+
+  const dayNames = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+  const today = formatDate(new Date());
+
+  let html = '<div class="schedule-header"><div class="schedule-col-time"></div>';
+  days.forEach((d, i) => {
+    const dateStr = formatDate(d);
+    const isToday = dateStr === today;
+    html += `
+      <div class="schedule-col-day ${isToday ? 'today' : ''}">
+        <div class="schedule-day-name">${dayNames[i]}</div>
+        <div class="schedule-day-date">${d.getDate()}/${d.getMonth() + 1}</div>
+      </div>
+    `;
+  });
+  html += '</div>';
+
+  API.shifts.getAll().forEach(shift => {
+    html += '<div class="schedule-row">';
+    html += `
+      <div class="schedule-col-time" style="border-left:4px solid ${shift.color};">
+        <strong>${shift.name}</strong>
+        <small>${shift.start} – ${shift.end}</small>
+      </div>
+    `;
+    days.forEach(d => {
+      const dateStr = formatDate(d);
+      const staffIds = API.shifts.getStaffInShift(dateStr, shift.id);
+      const staff = staffIds.map(id => API.staff.getById(id)).filter(Boolean);
+
+      html += `
+        <div class="schedule-cell" onclick="openShiftPicker('${dateStr}', '${shift.id}')">
+          ${staff.map(s => `
+            <div class="shift-staff-tag" style="background:${shift.color}22; border-color:${shift.color};">
+              <span class="shift-avatar" style="background:${shift.color};">${s.avatar}</span>
+              <span class="shift-name">${s.name.split(' ').slice(-2).join(' ')}</span>
+              <button class="shift-remove-btn" onclick="event.stopPropagation(); removeStaffFromShift('${dateStr}', '${shift.id}', '${s.id}')">✕</button>
+            </div>
+          `).join('')}
+          <div class="shift-add-hint">+ Thêm</div>
+        </div>
+      `;
+    });
+    html += '</div>';
+  });
+
+  grid.innerHTML = html;
+}
+
+/* ---------- MODAL CHỌN NHÂN VIÊN ---------- */
+let pickerDate = null;
+let pickerShift = null;
+
+function openShiftPicker(dateStr, shiftId) {
+  pickerDate = dateStr;
+  pickerShift = shiftId;
+
+  const shift = API.shifts.getById(shiftId);
+  const [y, m, d] = dateStr.split('-');
+  const dateFormatted = `${d}/${m}/${y}`;
+
+  document.getElementById('shiftModalTitle').textContent = `Chọn nhân viên cho ${shift.name}`;
+  document.getElementById('shiftModalSub').textContent = `Ngày ${dateFormatted} (${shift.start} – ${shift.end})`;
+
+  renderStaffPicker();
+  openModal('shiftModal');
+}
+
+function renderStaffPicker() {
+  const el = document.getElementById('staffPicker');
+  const allStaff = API.staff.getAll();
+  const currentIds = API.shifts.getStaffInShift(pickerDate, pickerShift);
+
+  el.innerHTML = allStaff.map(s => {
+    const isAssigned = currentIds.includes(s.id);
+    const busyShiftId = API.shifts.isStaffBusy(pickerDate, s.id);
+    const isBusy = busyShiftId && busyShiftId !== pickerShift;
+
+    let cls = 'staff-pick-item';
+    if (isAssigned) cls += ' assigned';
+    else if (isBusy) cls += ' disabled';
+
+    let statusText = '';
+    if (isAssigned) statusText = '✓ Đã phân';
+    else if (isBusy) {
+      const busyShift = API.shifts.getById(busyShiftId);
+      statusText = `Đã ở ${busyShift.name}`;
+    }
+
+    return `
+      <div class="${cls}" ${isBusy ? '' : `onclick="pickStaff('${s.id}')"`}>
+        <div class="staff-pick-avatar">${s.avatar}</div>
+        <div class="staff-pick-info">
+          <strong>${s.name}</strong>
+          <small>${s.role}</small>
+        </div>
+        <div class="staff-pick-status">${statusText}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function pickStaff(staffId) {
+  const success = API.shifts.addStaffToShift(pickerDate, pickerShift, staffId);
+  if (!success) {
+    showToast('⚠ Nhân viên đã có ca khác!', '#c62828');
+    return;
+  }
+  renderStaffPicker();
+  renderSchedule();
+  showToast('✓ Đã phân ca!');
+}
+
+function removeStaffFromShift(dateStr, shiftId, staffId) {
+  API.shifts.removeStaffFromShift(dateStr, shiftId, staffId);
+  renderSchedule();
+  showToast('Đã xoá khỏi ca');
+}
+
+function clearSchedule() {
+  if (!confirm('Xoá TOÀN BỘ lịch phân ca?')) return;
+  API.shifts.clearAll();
+  renderSchedule();
+  showToast('✓ Đã xoá lịch');
+}
+
+/* ---------- DANH SÁCH NHÂN VIÊN ---------- */
+function renderStaffList() {
+  const el = document.getElementById('staffList');
+  if (!el) return;
+
+  el.innerHTML = API.staff.getAll().map(s => `
+    <div class="staff-list-item">
+      <div class="staff-list-avatar">${s.avatar}</div>
+      <div class="staff-list-info">
+        <strong>${s.name}</strong>
+        <small>${s.role}</small>
+      </div>
+      <div class="staff-list-phone">📞 ${s.phone}</div>
+    </div>
+  `).join('');
+}
+
+/* Init schedule khi mở tab */
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    renderStaffList();
+    if (document.getElementById('scheduleGrid')) renderSchedule();
+  }, 500);
+});
+</script>
+</body>
+</html>
