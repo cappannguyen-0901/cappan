@@ -20,7 +20,6 @@
       <li><a href="menu.html">Thực đơn</a></li>
       <li><a href="booking.html" class="active">Đặt chỗ</a></li>
       <li><a href="order.html">Đặt nước</a></li>
-      <li><a href="cart.html">Giỏ hàng</a></li>
       <li><a href="tracking.html">Theo dõi đơn</a></li>
       <li><a href="contact.html">Liên hệ</a></li>
     </ul>
@@ -109,7 +108,6 @@
     <a href="menu.html">Thực đơn</a>
     <a href="booking.html">Đặt chỗ</a>
     <a href="order.html">Đặt nước</a>
-    <a href="cart.html">Giỏ hàng</a>
     <a href="tracking.html">Theo dõi đơn</a>
     <a href="contact.html">Liên hệ</a>
   </div>
@@ -199,8 +197,20 @@ function renderSeatMap() {
   const seats = API.seats.getByFloor(currentFloorId);
   if (!el) return;
 
-  const cols = Math.min(seats.length, 4);
-  el.style.gridTemplateColumns = `repeat(${cols}, 90px)`;
+  // ⚡ Điều chỉnh số cột theo kích thước màn hình
+  const screenWidth = window.innerWidth;
+  let cols;
+
+  if (screenWidth < 400) {
+    cols = 2;        // Điện thoại nhỏ
+  } else if (screenWidth < 768) {
+    cols = 3;        // Điện thoại lớn / tablet dọc
+  } else {
+    cols = Math.min(seats.length, 4);  // Desktop
+  }
+
+  // ⚡ Dùng 1fr thay vì px cứng → tự động co giãn
+  el.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
 
   el.innerHTML = seats.map(s => {
     const isBooked = s.status === 'booked';
@@ -314,7 +324,10 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
-  renderCartPage();
+  // ⚡ Render trang đặt chỗ
+  renderFloorSwitch();
+  renderFloorSummary();
+  renderSeatMap();
 });
 </script>
 </body>
