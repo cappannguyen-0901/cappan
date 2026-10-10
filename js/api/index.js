@@ -301,22 +301,40 @@ const API = {
     }
   },
 
-  /* ---------- ORDERS ---------- */
+    /* ---------- ORDERS ---------- */
   orders: {
     getAll() {
-      try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.orders) || '[]'); }
-      catch { return []; }
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEYS.orders) || '[]');
+      } catch {
+        return [];
+      }
     },
-    getById(id) { return this.getAll().find(o => o.id === id) || null; },
-    getByUser(uid) { return this.getAll().filter(o => o.userId === uid); },
+
+    getById(id) {
+      return this.getAll().find(o => o.id === id) || null;
+    },
+
+    getByUser(uid) {
+      return this.getAll().filter(o => o.userId === uid);
+    },
+
     getCurrent() {
-      try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.currentOrder) || 'null'); }
-      catch { return null; }
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEYS.currentOrder) || 'null');
+      } catch {
+        return null;
+      }
     },
+
     setCurrent(o) {
-      if (o) localStorage.setItem(STORAGE_KEYS.currentOrder, JSON.stringify(o));
-      else localStorage.removeItem(STORAGE_KEYS.currentOrder);
+      if (o) {
+        localStorage.setItem(STORAGE_KEYS.currentOrder, JSON.stringify(o));
+      } else {
+        localStorage.removeItem(STORAGE_KEYS.currentOrder);
+      }
     },
+
     create(data) {
       const list = this.getAll();
       const o = {
@@ -339,17 +357,62 @@ const API = {
       this.setCurrent(o);
       return o;
     },
+
     updateStep(id, step) {
       const list = this.getAll();
       const i = list.findIndex(o => o.id === id);
       if (i === -1) return null;
+
       list[i].step = step;
       const map = ['pending', 'preparing', 'delivering', 'delivering', 'completed'];
       list[i].status = map[step] || 'pending';
+
       localStorage.setItem(STORAGE_KEYS.orders, JSON.stringify(list));
+
       const cur = this.getCurrent();
       if (cur && cur.id === id) this.setCurrent(list[i]);
+
       return list[i];
+    },
+
+    /* ⚡ XÓA 1 ĐƠN THEO ID */
+    remove(id) {
+      const list = this.getAll();
+      const i = list.findIndex(o => o.id === id);
+      if (i === -1) return false;
+
+      list.splice(i, 1);
+      localStorage.setItem(STORAGE_KEYS.orders, JSON.stringify(list));
+
+      // Nếu đang xem đơn này → xóa current
+      const cur = this.getCurrent();
+      if (cur && cur.id === id) this.setCurrent(null);
+
+      return true;
+    },
+
+    /* ⚡ XÓA TẤT CẢ ĐƠN */
+    clearAll() {
+      localStorage.removeItem(STORAGE_KEYS.orders);
+      this.setCurrent(null);
+    },
+
+    /* ⚡ XÓA ĐƠN CŨ HƠN X NGÀY (mặc định 1 ngày) */
+    clearOld(days = 1) {
+      const list = this.getAll();
+      const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+
+      const filtered = list.filter(o => {
+        const created = new Date(o.createdAt).getTime();
+        return created > cutoff;
+      });
+
+      const removed = list.length - filtered.length;
+      if (removed > 0) {
+        localStorage.setItem(STORAGE_KEYS.orders, JSON.stringify(filtered));
+      }
+
+      return removed;
     }
   },
 

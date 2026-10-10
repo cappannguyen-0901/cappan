@@ -101,13 +101,21 @@
       </div>
 
       <div class="staff-panel">
-        <div class="panel-header">
-          <h3>📦 Đơn hàng gần đây</h3>
-        </div>
-        <div id="staffOrders">
-          <p class="empty-note">Chưa có đơn hàng nào.</p>
-        </div>
-      </div>
+  <div class="panel-header">
+    <h3>📦 Đơn hàng gần đây</h3>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <button class="btn-mini-reset" onclick="clearOldOrders()" title="Xóa đơn cũ hơn 1 ngày">
+        🕐 Xóa đơn cũ
+      </button>
+      <button class="btn-mini-reset" onclick="clearAllOrders()" title="Xóa TẤT CẢ đơn">
+        🗑️ Xóa tất cả
+      </button>
+    </div>
+  </div>
+  <div id="staffOrders">
+    <p class="empty-note">Chưa có đơn hàng nào.</p>
+  </div>
+</div>
     </div>
 
     <!-- LỊCH SỬ ĐẶT CHỖ -->
@@ -207,6 +215,15 @@ let currentWeekStart = getMonday(new Date());
 
 /* ---------- INIT ---------- */
 document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded', () => {
+  // ⚡ Tự động xóa đơn cũ hơn 1 ngày
+  const removed = API.orders.clearOld(1);
+  if (removed > 0) {
+    console.log(`🗑️ Tự động xóa ${removed} đơn cũ`);
+  }
+
+  // ... phần còn lại
+});
   const user = API.users.getCurrent();
 
   if (!user) {
@@ -415,10 +432,14 @@ function renderStaffOrders() {
       <div class="order-row-left">
         <strong>#${o.id}</strong>
         <small>${o.items.length} món · ${API.utils.formatVND(o.total)}</small>
+        <small style="display:block; color:#999; font-size:0.7rem;">
+          🕐 ${new Date(o.createdAt).toLocaleString('vi-VN')}
+        </small>
       </div>
       <div class="order-row-right">
         <span class="order-status-badge step-${o.step}">${statusText[o.step] || '—'}</span>
-        ${o.step < 4 ? `<button class="btn-mini" onclick="advanceOrder('${o.id}')">→</button>` : ''}
+        ${o.step < 4 ? `<button class="btn-mini" onclick="advanceOrder('${o.id}')" title="Bước tiếp">→</button>` : ''}
+        <button class="btn-mini-delete" onclick="deleteOrder('${o.id}')" title="Xóa đơn này">🗑️</button>
       </div>
     </div>
   `).join('');
@@ -674,6 +695,60 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('scheduleGrid')) renderSchedule();
   }, 500);
 });
+/* ============================================================
+   XÓA ĐƠN HÀNG
+============================================================ */
+
+/* Xóa 1 đơn */
+function deleteOrder(orderId) {
+  if (!confirm(`Xóa đơn #${orderId}? Hành động này không thể hoàn tác.`)) return;
+
+  const success = API.orders.remove(orderId);
+  if (success) {
+    renderStaffOrders();
+    renderStats();
+    showToast(`✓ Đã xóa đơn #${orderId}`);
+  } else {
+    showToast('⚠ Không tìm thấy đơn!', '#c62828');
+  }
+}
+
+/* Xóa đơn cũ hơn 1 ngày */
+function clearOldOrders() {
+  const oldCount = API.orders.getAll().filter(o => {
+    const created = new Date(o.createdAt).getTime();
+    return created < Date.now() - 24 * 60 * 60 * 1000;
+  }).length;
+
+  if (oldCount === 0) {
+    showToast('Không có đơn nào cũ hơn 1 ngày!', '#856404');
+    return;
+  }
+
+  if (!confirm(`Xóa ${oldCount} đơn cũ hơn 1 ngày?`)) return;
+
+  const removed = API.orders.clearOld(1);
+  renderStaffOrders();
+  renderStats();
+  showToast(`✓ Đã xóa ${removed} đơn cũ!`);
+}
+
+/* Xóa TẤT CẢ đơn */
+function clearAllOrders() {
+  const total = API.orders.getAll().length;
+  if (total === 0) {
+    showToast('Không có đơn nào để xóa!', '#856404');
+    return;
+  }
+
+  if (!confirm(`Xóa TẤT CẢ ${total} đơn hàng? Hành động này không thể hoàn tác.`)) return;
+
+  API.orders.clearAll();
+  renderStaffOrders();
+  renderStats();
+  showToast(`✓ Đã xóa ${total} đơn hàng!`);
+}
 </script>
+
 </body>
 </html>
